@@ -5,22 +5,19 @@ var Schema = mongoose.Schema;
 
 var User = new Schema({
     firstname: {
-        type: String,
-        required: true
+            type: String,
+            default: ''
     },
     lastname: {
         type: String,
-        required: true
+        default: ''
     },
     email: {
         type: String,
-        required: true,
-        unique: true
+        default: ''
     },
-    password:  {
-        type: String,
-        required: true
-    },
+    username: String,
+    password: String,
     admin:   {
         type: Boolean,
         default: false
@@ -28,6 +25,4 @@ var User = new Schema({
 });
 
 User.plugin(passportLocalMongoose);
-
-
-//module.exports = mongoose.model('User', User);
+module.exports = mongoose.model('User', User);
