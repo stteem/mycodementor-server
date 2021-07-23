@@ -42,15 +42,17 @@ router.post('/signup', (req, res, next) => {
   });
 });
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', passport.authenticate('local'), ( req, res) => {
 
   var token = authenticate.getToken({_id: req.user._id});
+  console.log('this user', req.user);
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
   res.json({
     success: true, 
+    firstname: req.user.firstname,
     token: token, 
-    status: 'You are successfully logged in!'
+    status: 'Successfully logged in!'
   });
 });
 

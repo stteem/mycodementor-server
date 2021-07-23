@@ -3,8 +3,7 @@ var LocalStrategy = require('passport-local').Strategy;
 var User = require('./models/user');
 
 passport.use(new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password'
+    usernameField: 'email'
 }, User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
@@ -37,7 +36,7 @@ exports.jwtPassport = passport.use(new JwtStrategy(options,
                 return done(null, user);
             }
             else {
-                return done(null, false);
+                return done(null, false, { message: 'Incorrect password.' });
             }
         });
     }));
