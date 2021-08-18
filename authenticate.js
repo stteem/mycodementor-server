@@ -32,12 +32,10 @@ exports.jwtPassport = passport.use(new JwtStrategy(options,
             if (err) {
                 return done(err, false);
             }
-            else if (user) {
-                return done(null, user);
+            if(!user){
+                return done(null, false, {message: "User doesn't exist"});
             }
-            else {
-                return done(null, false, { message: 'Incorrect password.' });
-            }
+            return done(null, user);
         });
     }));
 

@@ -3,6 +3,7 @@ var passport = require('passport');
 var router = express.Router();
 var User = require('../models/user');
 var authenticate = require('../authenticate');
+var cors = require('./cors');
 
 router.use(express.json());
 
@@ -20,7 +21,7 @@ router.post('/signup', (req, res, next) => {
     email : req.body.email,
     username: req.body.email
   }
-
+  console.log('new user ',newUser)
   User.register(new User(newUser), 
     req.body.password, (err, user) => {
     if(err) {
@@ -42,17 +43,134 @@ router.post('/signup', (req, res, next) => {
   });
 });
 
+router.post('/emailexists', (req, res, next) => {
+    User.find({email: req.body.email })
+    .then((email) => {
+        if(email.length == 0){
+          const response = { 
+           email: false 
+          }
+          email.push(response);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.json(email);
+        }
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(email);
+    }, (err) => next(err))
+    .catch((err) => {
+      console.log('error ', err)
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(err);
+    });
+});
+
 router.post('/login', passport.authenticate('local'), ( req, res) => {
 
-  var token = authenticate.getToken({_id: req.user._id});
-  console.log('this user', req.user);
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-  res.json({
-    success: true, 
-    firstname: req.user.firstname,
-    token: token, 
-    status: 'Successfully logged in!'
+  User.findById(req.user._id)
+  .then((user) => {
+    let isSubscribed = false;
+    let subscription = {};
+    if(user.subscription.length > 0){
+      subscription = user.subscription[0];
+      console.log('subscription ', subscription)
+      if(subscription.plan !== '') {
+        isSubscribed = true;
+      }
+    }
+    
+
+    var token = authenticate.getToken({_id: req.user._id});
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      success: true, 
+      subscription: subscription,
+      isSubscribed: isSubscribed,
+      firstname: req.user.firstname,
+      token: token, 
+      status: 'Successfully logged in!'
+    });
+           
+  })
+});
+
+router.get('/checkJWTtoken', (req, res, next) => {
+  passport.authenticate('jwt', {session: false}, (err, user, info) => {
+    if (err) {
+      console.log('error ', err);
+      return next(err);
+    }
+    if (!user) {
+      res.statusCode = 401;
+      res.setHeader('Content-Type', 'application/json');
+      console.log('info ', info);
+      return res.json({status: 'JWT invalid!', success: false, err: info});
+    }
+    else {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      return res.json({status: 'JWT valid!', success: true, user: user.firstname});
+    }
+  }) (req, res, next);
+});
+
+router.get('/subscription',  cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findById(req.user._id)
+  .then((user) => {
+    const result = user.subscription[0];
+    console.log('get result ', result)
+
+    res.statusCode = 201;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(result);          
+  })
+  .catch((err) => {
+    console.log('error ', err)
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(err);
+  });
+});
+
+router.post('/subscription', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  
+  User.findById(req.user._id)
+  .then((user) => {
+      if (user != null) {
+          req.body.session_per_month = req.body.plan === 'free' ? 2 : 5;
+          console.log(req.body)
+          user.subscription.unshift(req.body)
+          user.save()
+          .then((newuser) => {
+              const result = newuser.subscription[0];
+              console.log('result ', result)
+
+              res.statusCode = 201;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(result);          
+          }, (err) => {
+                console.log('error ', err)
+                //res.statusCode = 500;
+                res.setHeader('Content-Type', 'application/json');
+                res.status(500).json(err);
+          })
+          .catch(err => {throw(err)})
+      }
+      else {
+          err = new Error('Store ' + req.params.storeId + ' not found');
+          err.status = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.json(err);
+      }
+  })
+  .catch((err) => {
+      console.log('error ', err)
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(err);
   });
 });
 
