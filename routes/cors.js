@@ -2,7 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-const whitelist = ['http://localhost:4200'];
+const whitelist = [
+    'http://localhost:4200', 
+    'https://my-code-mentor.netlify.app', 
+    /\.my-code-mentor.netlify\.app$/
+];
 var corsOptionsDelegate = (req, callback) => {
     var corsOptions;
     console.log('cors ',req.header('Origin'));
