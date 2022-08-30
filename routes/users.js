@@ -2,6 +2,7 @@ var express = require('express');
 var passport = require('passport');
 var router = express.Router();
 var User = require('../models/user');
+var Subscription = require('../models/subscription');
 var authenticate = require('../authenticate');
 var cors = require('./cors');
 
@@ -69,27 +70,36 @@ router.post('/emailexists', (req, res, next) => {
 
 router.post('/login', passport.authenticate('local'), ( req, res) => {
 
-  User.findById(req.user._id)
-  .then((user) => {
-    let isSubscribed = false;
-    let subscription = {};
-    if(user.subscription.length > 0){
-      subscription = user.subscription[0];
-      console.log('subscription ', subscription)
-      if(subscription.plan !== '') {
-        isSubscribed = true;
-      }
+  console.log("got here")
+
+  Subscription.findOne({user: req.user._id})
+  .then((sub) => {
+
+    let subscription = {
+      plan: '',
+      price: 0,
+      sessions_per_month: 0,
+      sessions_scheduled: 0,
+      isSubscribed: false
+    };
+
+    if(sub !== null){
+      subscription = {
+        plan: sub.plan,
+        price: sub.price,
+        sessions_per_month: sub.sessions_per_month,
+        sessions_scheduled: sub.sessions_scheduled,
+        isSubscribed: true
+      };
     }
     
-
     var token = authenticate.getToken({_id: req.user._id});
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.json({
-      success: true, 
       subscription: subscription,
-      isSubscribed: isSubscribed,
-      firstname: req.user.firstname,
+      username: req.user.firstname,
+      loggedin: true,
       token: token, 
       status: 'Successfully logged in!'
     });

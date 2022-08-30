@@ -40,7 +40,11 @@ var User = new Schema({
         type: Boolean,
         default: false
     },
-    subscription: [subscriptionSchema]
+    subscription: [subscriptionSchema],
+    new_subscription: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscription'
+    }
 });
 
 User.plugin(passportLocalMongoose);

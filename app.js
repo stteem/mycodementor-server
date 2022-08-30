@@ -8,6 +8,7 @@ var authenticate = require('./authenticate');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var subscriptionRouter = require('./routes/subscription');
 
 const mongoose = require('mongoose');
 //mongoose.Promise = require('bluebird');
@@ -53,6 +54,7 @@ app.use(passport.initialize());
 
 app.use('/', indexRouter);
 app.use('/user', usersRouter);
+app.use('/subscription', subscriptionRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
