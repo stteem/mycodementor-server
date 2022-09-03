@@ -11,9 +11,6 @@ router.use(express.json());
 router.get('/get_subscription',  cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
   Subscription.findOne({user: req.user._id})
   .then((sub) => {
-
-    console.log('get result ', sub)
-
     if(sub !== null){
       let body = {
         plan: sub.plan,
@@ -37,11 +34,10 @@ router.get('/get_subscription',  cors.corsWithOptions, authenticate.verifyUser, 
       }
       res.statusCode = 201;
       res.setHeader('Content-Type', 'application/json');
-      res.send(body);
+      res.json(body);
     }            
   })
   .catch((err) => {
-    console.log('error ', err)
       res.statusCode = 500;
       res.setHeader('Content-Type', 'application/json');
       res.json(err);
@@ -52,7 +48,6 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
   Subscription.findOne({user: req.user._id})
   .then((sub) => {
     if(sub === null){
-      console.log(req.body)
       let body = {
         plan: req.body.plan,
         price: req.body.value,
@@ -60,10 +55,8 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
         sessions_scheduled: 0,
         user: req.user._id
       }
-      console.log({body})
       Subscription.create(body)
       .then((new_sub) => {
-        console.log({new_sub})
         let new_body = {
           plan: new_sub.plan,
           price: new_sub.price,
@@ -77,14 +70,12 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
         res.json(new_body);
       })
       .catch((err) => {
-          console.log('error ', err)
           res.statusCode = 500;
           res.setHeader('Content-Type', 'application/json');
           res.json(err);
       });
     }
     else {
-      console.log("Update")
       let update = {
         plan: req.body.plan,
         price: req.body.value,
@@ -109,7 +100,6 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
         res.json(new_body);
       })
       .catch((err) => {
-        console.log('error ', err)
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
         res.json(err);
@@ -117,7 +107,6 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
     }
   })
   .catch((err) => {
-    console.log('error ', err)
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
     res.json(err);
@@ -125,19 +114,25 @@ router.post('/subscribe', cors.corsWithOptions, authenticate.verifyUser, (req, r
 });
 
 
-router.post('/update_sessions', cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
-  console.log("Update session scheduled", req.body)
+router.put('/update_sessions', cors.corsWithOptions, authenticate.verifyUser, async (req, res) => {
   try {
     let doc = await Subscription.findOne({ user: req.user._id });
     doc.sessions_scheduled += req.body.value
     await doc.save();
 
+    let new_body = {
+      plan: doc.plan,
+      price: doc.price,
+      sessions_per_month: doc.sessions_per_month,
+      sessions_scheduled: doc.sessions_scheduled,
+      isSubscribed: true
+    }
+
     res.statusCode = 201;
     res.setHeader('Content-Type', 'application/json');
-    res.json(doc);
+    res.json(new_body);
   }
   catch(error){
-    console.log('error ', error)
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
     res.json(error);

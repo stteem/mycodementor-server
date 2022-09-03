@@ -13,7 +13,6 @@ const whitelist = [
 ];
 var corsOptionsDelegate = (req, callback) => {
     var corsOptions;
-    console.log('cors ',req.header('Origin'));
     if(whitelist.indexOf(req.header('Origin')) !== -1) {
         corsOptions = { origin: true };
     }
